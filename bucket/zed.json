@@ -3,7 +3,11 @@
     "description": "Zed is a high-performance, multiplayer code editor from the creators of Atom and Tree-sitter. It's also open source.",
     "homepage": "https://zed.dev/",
     "license": "AGPL-3.0, Apache-2.0, GPL-3.0",
-    "notes": "Please manually disable Zed's auto-update feature in the settings to prevent the updater from installing the program in unintended locations.",
+    "notes": [
+        "Please manually disable Zed's auto-update feature in the settings to prevent the updater from installing the program in unintended locations.",
+        "Add Zed as a context menu option by running:",
+        "reg import \"$dir\\install-context.reg\""
+    ],
     "architecture": {
         "64bit": {
             "url": "https://github.com/zed-industries/zed/releases/download/v1.30.2/Zed-x86_64.exe",
@@ -20,6 +24,16 @@
             "Expand-InnoArchive -Path \"$dir\\$fname\" -ExtractDir '{code_GetInstallDir}' -Removal"
         ]
     },
+    "post_install": [
+        "$zedPath = \"$dir\\Zed.exe\".Replace('\\', '\\\\')",
+        "'install-context', 'uninstall-context' | ForEach-Object {",
+        "    if (Test-Path \"$bucketsdir\\$bucket\\scripts\\$app\\$_.reg\") {",
+        "        $content = (Get-Content \"$bucketsdir\\$bucket\\scripts\\$app\\$_.reg\" -Encoding UTF8).Replace('$zed', $zedPath)",
+        "        if ($global) { $content = $content.Replace('HKEY_CURRENT_USER', 'HKEY_LOCAL_MACHINE') }",
+        "        Set-Content \"$dir\\$_.reg\" $content -Encoding Unicode -Force",
+        "    }",
+        "}"
+    ],
     "bin": "bin\\zed.exe",
     "shortcuts": [
         [
@@ -27,6 +41,15 @@
             "Zed"
         ]
     ],
+    "uninstaller": {
+        "script": [
+            "if ($cmd -eq 'uninstall') {",
+            "    if (Test-Path \"$dir\\uninstall-context.reg\") {",
+            "        reg import \"$dir\\uninstall-context.reg\" *> $null",
+            "    }",
+            "}"
+        ]
+    },
     "checkver": {
         "github": "https://github.com/zed-industries/zed"
     },
